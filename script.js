@@ -2,6 +2,38 @@ const form = document.getElementById('uploadForm');
 const fileInput = document.getElementById('fileInput');
 const orgNameInput = document.getElementById('orgNameInput');
 const responseOutput = document.getElementById('responseOutput');
+const timerDisplay = document.getElementById('timerDisplay');
+
+let timerInterval;
+let startTime;
+
+function startTimer() {
+    // Clear any existing timer
+    clearInterval(timerInterval);
+    
+    // Reset timer display
+    timerDisplay.textContent = 'Time elapsed: 0s';
+    
+    // Set start time
+    startTime = Date.now();
+    
+    // Start timer interval
+    timerInterval = setInterval(() => {
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+        
+        if (elapsedSeconds < 60) {
+            timerDisplay.textContent = `Time elapsed: ${elapsedSeconds}s`;
+        } else {
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            timerDisplay.textContent = `Time elapsed: ${minutes}m ${seconds}s`;
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+}
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault(); // Prevent default form submission
@@ -20,10 +52,10 @@ form.addEventListener('submit', async (event) => {
     }
 
     responseOutput.textContent = 'Processing...';
+    startTimer(); // Start the timer when request begins
 
     const formData = new FormData();
     formData.append('file', file);
-
 
     try {
         const response = await fetch('https://web-finder.contextqa.com/case/suggestions/requirements', { // Adjust URL if needed
@@ -36,6 +68,7 @@ form.addEventListener('submit', async (event) => {
         });
 
         const responseData = await response.json();
+        stopTimer(); // Stop the timer when response is received
 
         if (response.ok) {
             responseOutput.textContent = JSON.stringify(responseData, null, 2); // Pretty print JSON
@@ -43,6 +76,7 @@ form.addEventListener('submit', async (event) => {
             responseOutput.textContent = `Error: ${response.status} - ${responseData.message || JSON.stringify(responseData)}`;
         }
     } catch (error) {
+        stopTimer(); // Stop the timer on error
         console.error('Error submitting form:', error);
         responseOutput.textContent = `Network or client-side error: ${error.message}`;
     }
